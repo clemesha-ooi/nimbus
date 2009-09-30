@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+    <!--
+
+    If this is your "db-ACTIVE.xml" file, then you have enabled the default
+    database system which is an embedded Derby database that runs in the same
+    JVM as the service.
+
+    -->
+
+    <bean id="other.MainDataSource"
+          class="org.apache.commons.dbcp.BasicDataSource">
+
+        <property name="maxActive" value="10" />
+        <property name="maxIdle" value="4" />
+        <property name="maxWait" value="2000" />
+        <property name="poolPreparedStatements" value="true" />
+        <property name="driverClassName"
+                  value="org.apache.derby.jdbc.EmbeddedDriver" />
+        <property name="url"
+                  value="jdbc:derby:nimbus/WorkspacePersistenceDB" />
+
+    </bean>
+
+    <bean id="other.AccountingDataSource"
+          class="org.apache.commons.dbcp.BasicDataSource">
+
+        <property name="maxActive" value="10" />
+        <property name="maxIdle" value="4" />
+        <property name="maxWait" value="2000" />
+        <property name="poolPreparedStatements" value="true" />
+        <property name="driverClassName"
+                  value="org.apache.derby.jdbc.EmbeddedDriver" />
+        <property name="url"
+                  value="jdbc:derby:nimbus/WorkspaceAccountingDB" />
+
+    </bean>
+</beans>

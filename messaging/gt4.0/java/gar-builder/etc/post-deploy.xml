@@ -31,6 +31,9 @@
     <property name="dbsetup.dir"
               location="${deploy.dir}/share/${base.package.name}"/>
 
+    <property name="netdbsetup.dir"
+              location="${deploy.dir}/share/${base.package.name}/netderby"/>
+
     <property name="dbsetup.antfile"
               location="${dbsetup.dir}/lib/db-mgmt.xml"/>
 
@@ -148,6 +151,12 @@
 
         <chmod perm="755">
             <fileset dir="${dbsetup.dir}">
+                <include name="*.sh"/>
+            </fileset>
+        </chmod>
+
+        <chmod perm="755">
+            <fileset dir="${netdbsetup.dir}">
                 <include name="*.sh"/>
             </fileset>
         </chmod>

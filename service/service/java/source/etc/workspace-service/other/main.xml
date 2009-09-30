@@ -187,7 +187,6 @@
             <constructor-arg ref="nimbus-rm.service.binding.GlobalPolicies" />
 
             <!-- <property name="sda1Replacement" value="xvda1" /> -->
-
     </bean>
 
     <bean id="nimbus-rm.service.binding.BindVMM"
@@ -612,32 +611,10 @@
         </property>
     </bean>
 
-    <bean id="other.MainDataSource"
-          class="org.apache.commons.dbcp.BasicDataSource">
-        
-        <property name="maxActive" value="10" />
-        <property name="maxIdle" value="4" />
-        <property name="maxWait" value="2000" />
-        <property name="poolPreparedStatements" value="true" />
-        <property name="driverClassName"
-                  value="org.apache.derby.jdbc.EmbeddedDriver" />
-        <property name="url"
-                  value="jdbc:derby:nimbus/WorkspacePersistenceDB" />
-        
-    </bean>
+    <!-- ===================================================================
+         db (data sources) are concentrated in this file
+         =================================================================== -->
 
-    <bean id="other.AccountingDataSource"
-          class="org.apache.commons.dbcp.BasicDataSource">
-
-        <property name="maxActive" value="10" />
-        <property name="maxIdle" value="4" />
-        <property name="maxWait" value="2000" />
-        <property name="poolPreparedStatements" value="true" />
-        <property name="driverClassName"
-                  value="org.apache.derby.jdbc.EmbeddedDriver" />
-        <property name="url"
-                  value="jdbc:derby:nimbus/WorkspaceAccountingDB" />
-        
-    </bean>
+    <import resource="db-ACTIVE.xml"/>
 
 </beans>

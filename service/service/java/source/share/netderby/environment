@@ -1,0 +1,163 @@
+#!/bin/bash
+
+NETWORK_DERBY_PORT="1088"
+
+NETWORK_DERBY_USER="APP"
+NETWORK_DERBY_PASSWORD="NO_PASSWORD"
+
+# If the following is blank, the network based derby database will only accept
+# connections from localhost.  This is what you want unless you are running the
+# server on a different node than the services container.
+NETWORK_DERBY_HOST=""
+
+# If it instead contains a server name, it will accept remote connections that
+# connect to the corresponding interface.
+# NETWORK_DERBY_HOST="example.com"
+
+# If it instead contains 0.0.0.0, it will accept remote connections via any
+# network interface.
+# NETWORK_DERBY_HOST="0.0.0.0"
+
+
+
+
+#################################################
+#                                               #
+# You should not need to edit anything below.   #
+#                                               #
+#################################################
+
+##### Check GLOBUS_LOCATION
+
+if [ "X$GLOBUS_LOCATION" = "X" ]; then
+    echo "You need to define GLOBUS_LOCATION in order to run this script."
+    exit 1
+fi
+
+if [ ! -d "$GLOBUS_LOCATION" ]; then
+    echo "GLOBUS_LOCATION is defined but it is not a directory?"
+    exit 1
+fi
+
+
+##### Set up expected locations of everything
+
+DERBY_DIR="$GLOBUS_LOCATION/var"
+export DERBY_DIR
+
+NIMBUS_PERSISTENCE_DIR="$DERBY_DIR/nimbus"
+NIMBUS_SERVICE_DB="$NIMBUS_PERSISTENCE_DIR/WorkspacePersistenceDB"
+NIMBUS_ACCOUNTING_DB="$NIMBUS_PERSISTENCE_DIR/WorkspaceAccountingDB"
+
+LIBDIR="$GLOBUS_LOCATION/lib"
+DERBY_JAR1="$LIBDIR/derby.jar"
+DERBY_JAR2="$LIBDIR/derbynet.jar"
+DERBY_JAR3="$LIBDIR/derbytools.jar"
+
+
+##### Check expected locations of everything
+
+if [ ! -d "$NIMBUS_SERVICE_DB" ]; then
+    echo "Problem, cannot locate the nimbus services database at:"
+    echo "    $NIMBUS_SERVICE_DB"
+    exit 1
+fi
+
+if [ ! -d "$NIMBUS_ACCOUNTING_DB" ]; then
+    echo "Problem, cannot locate the nimbus accounting database at:"
+    echo "    $NIMBUS_ACCOUNTING_DB"
+    exit 1
+fi
+
+if [ ! -f "$DERBY_JAR1" ]; then
+    echo "Problem, cannot locate derby dependency:"
+    echo "    $DERBY_JAR1"
+fi
+
+if [ ! -f "$DERBY_JAR2" ]; then
+    echo "Problem, cannot locate derby dependency:"
+    echo "    $DERBY_JAR2"
+fi
+
+if [ ! -f "$DERBY_JAR3" ]; then
+    echo "Problem, cannot locate derby dependency:"
+    echo "    $DERBY_JAR3"
+fi
+
+
+##### Prepare the classpath
+
+USECLASSPATH=""
+if [ "X$CLASSPATH" = "X" ]; then
+    USECLASSPATH="$DERBY_JAR1:$DERBY_JAR2:$DERBY_JAR3:$CLASSPATH"
+else
+    USECLASSPATH="$DERBY_JAR1:$DERBY_JAR2:$DERBY_JAR3"
+fi
+
+
+##### Prepare commands to execute
+
+if [ "X$JAVA_HOME" = "X" ] ; then
+  _RUNJAVA=java
+ else
+  _RUNJAVA="$JAVA_HOME"/bin/java
+fi
+
+_DBPORT=""
+if [ "X$NETWORK_DERBY_PORT" != "X" ]; then
+    _DBPORT="-p $NETWORK_DERBY_PORT"
+fi
+
+_DBHOST=""
+if [ "X$NETWORK_DERBY_HOST" != "X" ]; then
+    _DBHOST="-h $NETWORK_DERBY_HOST"
+fi
+
+_DBUSER=""
+if [ "X$NETWORK_DERBY_USER" != "X" ]; then
+    _DBUSER="-user $NETWORK_DERBY_USER"
+fi
+
+_DBPASS=""
+if [ "X$NETWORK_DERBY_PASSWORD" != "X" ]; then
+    _DBPASS="-password $NETWORK_DERBY_PASSWORD"
+fi
+
+
+_AUTH_OPTIONS=""
+_JAVAAUTH_OPTIONS=""
+if [ "X$_DBUSER" != "X" ]; then
+  if [ "X$_DBPASS" != "X" ]; then
+     _AUTH_OPTIONS="$_DBUSER $_DBPASS"
+     _JAVAAUTH_OPTIONS="-Dderby.connection.requireAuthentication=true \
+                        -Dderby.authentication.provider=BUILTIN \
+                        -Dderby.user.$NETWORK_DERBY_USER=$NETWORK_DERBY_PASSWORD"
+  fi
+fi
+
+
+# note, if you want to connect via ij and use username and password, it will
+# look like this:
+# connect 'jdbc:derby://localhost:1088/something;create=true;user=nimbus;password=NO_PASSWORD' ;
+
+
+if [ "X$_AUTH_OPTIONS" = "X" ]; then
+  echo ""
+  echo "*** WARNING: not using any user authentication with network derby server"
+  echo ""
+fi
+
+_CMDOPTS="$_DBPORT $_DBHOST $_AUTH_OPTIONS"
+
+NIMBUS_NETDERBY_START="exec $_RUNJAVA $_JAVAAUTH_OPTIONS -classpath \"$USECLASSPATH\" org.apache.derby.drda.NetworkServerControl start $_CMDOPTS"
+export NIMBUS_NETDERBY_START
+
+NIMBUS_NETDERBY_STOP="exec $_RUNJAVA -classpath \"$USECLASSPATH\" org.apache.derby.drda.NetworkServerControl shutdown $_CMDOPTS"
+export NIMBUS_NETDERBY_STOP
+
+NIMBUS_NETDERBY_SYSINFO="exec $_RUNJAVA -classpath \"$USECLASSPATH\" org.apache.derby.tools.sysinfo"
+export NIMBUS_NETDERBY_SYSINFO
+
+NIMBUS_NETDERBY_DBLOOK="exec $_RUNJAVA -classpath \"$USECLASSPATH\" org.apache.derby.tools.dblook $_CMDOPTS"
+export NIMBUS_NETDERBY_DBLOOK
+
