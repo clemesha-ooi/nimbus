@@ -140,7 +140,6 @@ fi
 # look like this:
 # connect 'jdbc:derby://localhost:1088/something;create=true;user=nimbus;password=NO_PASSWORD' ;
 
-
 if [ "X$_AUTH_OPTIONS" = "X" ]; then
   echo ""
   echo "*** WARNING: not using any user authentication with network derby server"
