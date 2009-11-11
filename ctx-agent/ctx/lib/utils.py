@@ -8,6 +8,10 @@ import fcntl
 import socket
 import commands
 
+#from popen2 import Popen3
+from subprocess import Popen, PIPE
+
+
 try:
     from threading import Thread
 except ImportError:
@@ -144,13 +148,19 @@ class SimpleRunThread(Thread):
             self.log.debug("delaying for %.3f secs: '%s'" % (self.delay, self.cmd))
             time.sleep(self.delay)
         self.log.debug("program starting '%s'" % self.cmd)
-	p = Popen3(self.cmd, True)
+        #p = Popen3(self.cmd, True)
+        args = self.cmd.split(" ") #Popen requires command and all args in a list
+        p = Popen(args, stderr=PIPE, stdin=PIPE, stdout=PIPE, close_fds=True)
         if self.stdin:
             if p.poll() == -1:
+                self.stdout, self.stderr = p.communicate(self.stdin) #XXX ?? get stdout,stderr here?
+                #p.communicate(self.stdin)
+                """
                 p.tochild.write(self.stdin)
                 p.tochild.flush()
                 p.tochild.close()
-                #log.debug("wrote '%s' to child" % self.stdin)
+                """
+                log.debug("wrote '%s' to child" % self.stdin)
             else:
                 self.log.error("child exited before stdin was written to")
         done = False
@@ -168,14 +178,20 @@ class SimpleRunThread(Thread):
                 self.log.exception("problem killing")
                 self.exception = e
                 return
-                
-        self.exit = p.wait()
+
+        """
         self.stdout = p.fromchild.read()
         self.stderr = p.childerr.read()
         p.fromchild.close()
         p.childerr.close()
+        """
+        #self.exit = p.wait()
+        self.stdout, self.stderr = p.communicate()
+        self.exit = p.returncode #XXX ?
+        #XXX dont need to close stdout, stderr?
         self.log.debug("program ended: '%s'" % self.cmd)
-        
+
+
 def runexe(cmd, killtime=2.0):
     """Run a system program.
     
