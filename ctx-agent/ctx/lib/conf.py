@@ -42,6 +42,8 @@ NS_CTX = NS_CTXBROKER + "/contextualization"
 NS_CTXTYPES = NS_CTXBROKER + "/ctxtypes"
 NS_CTXDESC = NS_CTXBROKER + "/ctxdescription"
 
+CONSUME_RETRIEVE_RESULT_TYPE = "Chef" #"Default"
+
 # }}} END: Globals
 
 # ############################################################

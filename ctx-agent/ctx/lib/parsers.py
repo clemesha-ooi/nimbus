@@ -1,5 +1,3 @@
-import sys
-sys.path.append(".")
 try:
     #import elementtree.ElementTree as ET
     from xml.etree import ElementTree as ET #XXX what Python version support this?
