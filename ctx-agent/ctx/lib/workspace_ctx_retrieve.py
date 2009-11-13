@@ -26,7 +26,7 @@ from actions import DefaultRetrieveAction , DefaultConsumeRetrieveResult
 from actions import get_broker_okaction, get_broker_erraction
 from utils import runexe, starttimer, terminateok, setterminateok
 from utils import getlogfilepath, setlogfilepath, write_repl_file
-from conf import NS_CTX, NS_CTXTYPES, NS_CTXDESC, VERSION, DEFAULTCONFIG
+from conf import NS_CTX, NS_CTXTYPES, NS_CTXDESC, VERSION, DEFAULTCONFIG, CONSUME_RETRIEVE_RESULT_TYPE 
 from conf import getconfig, getCommonConf, getReginstConf, getAmazonConf
 
 # ############################################################
@@ -320,8 +320,16 @@ def mainrun(argv=None):
         ##      places RetrieveResult object in its "result" field.  ##
         ###############################################################
             
-        # only one impl right now:
-        caction = DefaultConsumeRetrieveResult(commonconf, ractionresult, iactionresult)
+	#XXX the below could be done in a better way?
+	cls = CONSUME_RETRIEVE_RESULT_TYPE+"ConsumeRetrieveResult"
+	print " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ", cls
+	try:
+	    exec "from actions import %s as ConsumeRetrieveResult"%cls
+	except ImportError:
+	    print "The provided 'CONSUME_RETRIEVE_RESULT_TYPE' conf option is not supported."
+	    sys.exit(-1)
+
+        caction = ConsumeRetrieveResult(commonconf, ractionresult, iactionresult)
         log.info("Running consume action")
         caction.run()
         

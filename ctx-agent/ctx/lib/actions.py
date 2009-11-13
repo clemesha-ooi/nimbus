@@ -1504,6 +1504,54 @@ class DefaultConsumeRetrieveResult(Action):
                 self.log.info("Successfully ran '%s'" % taskpath)
         
 # }}} END: DefaultConsumeRetrieveResult(Action)
+
+
+class ChefConsumeRetrieveResult(DefaultConsumeRetrieveResult):
+
+    """'Chef' specific ConsumeRetrieveResult.
+    """
+    
+    def __init__(self, commonconf, retrresult, instresult, log_override=None):
+        """Instantiate object with configurations necessary to operate.
+        """
+        DefaultConsumeRetrieveResult.__init__(self, commonconf, retrresult, instresult, log_override=None)
+        self.chef_log_level = "debug"
+        self.role_json = {} # *This Nodes* role specific data, to be used to create the "role.json" file for Chef
+ 
+    def handle_opaquedata(self):
+        if len(self.retrresult.data) == 0:
+            self.log.debug("No opaque data fields")
+            return
+        
+        for one in self.retrresult.data:
+            datadict = eval(one.data) #one.data must eval to a Python dict. 
+            name = one.data #How should this be used?
+            try:
+                role = datadict.pop("role") #XXX This is *this nodes role* ... TODO: understand terminology better.
+                self.role_json["recipes"] = [role] #the "role" maps to corresponding recipe
+            except KeyError:
+                #TODO set real error here
+                print "No role found in data"
+            self.role_json.update(datadict) #add the rest of the data to the role_json dict
+
+    def handle_roles(self):
+        # XXX is this function really more approp called "handle_required_roles"?
+        for (i, role) in enumerate(self.retrresult.roles):
+            rolename = role.name+str(i)
+            self.role_json[rolename] = role.ip 
+
+    def handle_thishost(self, finalize=False):
+        if finalize:
+            fh = open("/opt/chef/role.json", "w")
+            fh.write(str(self.role_json))
+            fh.close()
+            #cmd = "chef-solo -l debug -c /opt/chef/conf.json -j /opt/chef/role.json -r http://ooici.net/ctx/cookbooks/test/cookbooks.tar.gz" #remote cookbooks
+            cmd = "chef-solo -l %s -c /opt/chef/conf.json -j /opt/chef/role.json" % self.chef_log_level
+            (exit, stdout, stderr) = runexe(cmd, killtime=0)
+        else:
+            print "Do something useful here"
+ 
+
     
 
 # ############################################################
