@@ -120,6 +120,9 @@ class Bootstrap:
         clustertext = ET.tostring(clusterXML, encoding="UTF-8")
         clusterXMllines = clustertext.split("\n")
         self.cluster = "\n".join(clusterXMllines[1:])
+
+        activeTag = "{%s}active" % namespace_desc
+        self.active = tree.find(activeTag)
             
         brokerURLTag = "{%s}brokerURL" % namespace_desc
         self.service_url = contact.find(brokerURLTag)
@@ -484,6 +487,11 @@ class RegularInstantiation(Action):
             raise UnexpectedError("could not obtain userdata @ '%s'" % geturl)
         
         bootstrap = Bootstrap(userdataText)
+        
+        active = bootstrap.active
+        if self.common.trace:
+            self.log.debug("active state = '%s'" % active)
+        self.result.active = active
         
         url = bootstrap.service_url
         if self.common.trace:
@@ -1516,6 +1524,7 @@ class ChefConsumeRetrieveResult(DefaultConsumeRetrieveResult):
         """
         DefaultConsumeRetrieveResult.__init__(self, commonconf, retrresult, instresult, log_override=None)
         self.chef_log_level = "debug"
+        self.chef_cmd = "chef-solo -l %s -c /opt/chef/conf.json -j /opt/chef/role.json -r /opt/chef/cookbooks.tar.gz" % self.chef_log_level
         self.role_json = {} # *This Nodes* role specific data, to be used to create the "role.json" file for Chef
  
     def handle_opaquedata(self):
@@ -1545,11 +1554,22 @@ class ChefConsumeRetrieveResult(DefaultConsumeRetrieveResult):
             fh = open("/opt/chef/role.json", "w")
             fh.write(str(self.role_json))
             fh.close()
-            #cmd = "chef-solo -l debug -c /opt/chef/conf.json -j /opt/chef/role.json -r http://ooici.net/ctx/cookbooks/test/cookbooks.tar.gz" #remote cookbooks
-            cmd = "chef-solo -l %s -c /opt/chef/conf.json -j /opt/chef/role.json" % self.chef_log_level
-            (exit, stdout, stderr) = runexe(cmd, killtime=0)
+            (exit, stdout, stderr) = runexe(self.chef_cmd, killtime=0)
+            result = "'%s': exit=%d, stdout='%s'," % (self.chef_cmd, exit, stdout)
+            result += " stderr='%s'" % (stderr)
+     
+            self.log.debug(result)
+            if self.common.trace:
+                self.log.debug(result)
+            
+            if exit != 0:
+                msg = "PROBLEM: 'chef-solo' "
+                msg += "result: %s" % result
+                #raise UnexpectedError(msg)
+            else:
+                self.log.info("'chef-solo' successfully completed")
         else:
-            print "Do something useful here"
+            self.log.info("'handle_thishost' not finalize")
  
 
     

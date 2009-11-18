@@ -322,7 +322,6 @@ def mainrun(argv=None):
             
 	#XXX the below could be done in a better way?
 	cls = CONSUME_RETRIEVE_RESULT_TYPE+"ConsumeRetrieveResult"
-	print " ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ", cls
 	try:
 	    exec "from actions import %s as ConsumeRetrieveResult"%cls
 	except ImportError:

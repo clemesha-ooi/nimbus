@@ -1,0 +1,18 @@
+
+
+
+Directory structure of "/opt" in Chef+ctx-agent VM
+==================================================
+root@example:/opt# ls -l /opt/*
+/opt/chef:
+-rw-r--r-- ... config.json
+drwxr-xr-x ... cookbooks
+-rw-r--r-- ... cookbooks.tar.gz
+-rw-r--r-- ... role.json
+
+/opt/nimbus:
+total 32
+drwxrwxr-x ... ctx
+-rw-r--r-- ... ctxlog.txt
+drwxrwxr-x ... ctx-scripts
+

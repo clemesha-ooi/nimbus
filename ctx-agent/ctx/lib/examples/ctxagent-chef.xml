@@ -1,0 +1,38 @@
+<cluster xmlns="http://www.globus.org/2008/06/workspace/metadata/logistics">
+
+ <workspace>
+   <name>nginx-loadbalancer-master</name>
+   <image>ami-b48765dd</image>
+   <quantity>1</quantity>
+   <nic wantlogin="true">public</nic>
+   <ctx>
+     <provides>
+       <identity/>
+       <role>master</role>
+     </provides>
+     <requires>
+       <identity/>
+       <role name="slave" hostname="true" pubkey="true" />
+       <data name="data"><![CDATA[{'role':'master', 'master_data':{'a':1,'b':2}, 'slave_data':{'y':8, 'z':9}}]]></data>
+     </requires>
+   </ctx>
+ </workspace>
+ 
+ <workspace>
+   <name>web-application-slave</name>
+   <image>ami-b48765dd</image>
+   <quantity>1</quantity>
+   <nic wantlogin="true">public</nic>
+   <ctx>
+     <provides>
+       <identity/>
+       <role>slave</role>
+     </provides>
+     <requires>
+       <identity/>
+       <data name="data"><![CDATA[{'role':'slave', 'master_data':{'a':1,'b':2}, 'slave_data':{'y':8, 'z':9}}]]></data>
+     </requires>
+   </ctx>
+ </workspace>
+
+</cluster>
