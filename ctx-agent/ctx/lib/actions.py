@@ -108,10 +108,24 @@ class Bootstrap:
         
         contactTag = "{%s}contact" % namespace_desc
         contact = tree.find(contactTag)
-        
+
         clusterTag = "{%s}cluster" % namespace_desc
         clusterXML = tree.find(clusterTag)
-                
+
+        workspaceTag = "{%s}workspace" % namespace_desc
+        activeTag = "{%s}active" % namespace_desc
+        nameTag = "{%s}name" % namespace_desc
+        ctxTag = "{%s}ctx" % namespace_desc
+        providesTag = "{%s}provides" % namespace_desc
+        roleTag = "{%s}role" % namespace_desc
+        workspaces = clusterXML.findall(workspaceTag)
+        #find the active role, and set it's name as self.active:
+        for ws in workspaces:
+            active_bool = ws.find(activeTag).text
+            if active_bool == "true":
+                role = ws.find(ctxTag).find(providesTag).find(roleTag).text
+                self.active = role
+         
         if contact == None:
             raise UnexpectedError("could not locate broker contact type in userdata")
         
@@ -120,9 +134,6 @@ class Bootstrap:
         clustertext = ET.tostring(clusterXML, encoding="UTF-8")
         clusterXMllines = clustertext.split("\n")
         self.cluster = "\n".join(clusterXMllines[1:])
-
-        activeTag = "{%s}active" % namespace_desc
-        self.active = tree.find(activeTag)
             
         brokerURLTag = "{%s}brokerURL" % namespace_desc
         self.service_url = contact.find(brokerURLTag)
@@ -772,6 +783,11 @@ class AmazonInstantiation(Action):
             
         bootstrap = Bootstrap(text)
         
+        active = bootstrap.active
+        if self.common.trace:
+            self.log.debug("active = '%s'" % active)
+        self.result.active = active
+
         url = bootstrap.service_url
         if self.common.trace:
             self.log.debug("contextualization service URL = '%s'" % url)
@@ -1523,8 +1539,13 @@ class ChefConsumeRetrieveResult(DefaultConsumeRetrieveResult):
         """Instantiate object with configurations necessary to operate.
         """
         DefaultConsumeRetrieveResult.__init__(self, commonconf, retrresult, instresult, log_override=None)
+        #TODO: make these configurable:
         self.chef_log_level = "debug"
-        self.chef_cmd = "chef-solo -l %s -c /opt/chef/conf.json -j /opt/chef/role.json -r /opt/chef/cookbooks.tar.gz" % self.chef_log_level
+        self.chef_conf = "/opt/chef/conf.json"
+        self.chef_role = "/opt/chef/role.json"
+        self.chef_cookbooks = "/opt/chef/cookbooks.tar.gz"
+        self.chef_cmd_args = (self.chef_log_level, self.chef_conf, self.chef_role, self.chef_cookbooks)
+        self.chef_cmd = "chef-solo -l %s -c %s -j %s -r %s" % self.chef_cmd_args
         self.role_json = {} # *This Nodes* role specific data, to be used to create the "role.json" file for Chef
  
     def handle_opaquedata(self):
@@ -1532,16 +1553,22 @@ class ChefConsumeRetrieveResult(DefaultConsumeRetrieveResult):
             self.log.debug("No opaque data fields")
             return
         
+        active_role = self.instresult.active
+        self.log.info("active_role = '%s'" % active_role)
+        self.role_json["recipes"] = [active_role] #the "active_role" maps to corresponding recipe
+        #XXX uneeded loop? All <data> elements are the same.
         for one in self.retrresult.data:
-            datadict = eval(one.data) #one.data must eval to a Python dict. 
-            name = one.data #How should this be used?
+            # TODO: make this json? one.data must eval to a Python dict. 
+            datadict = eval(one.data) 
             try:
-                role = datadict.pop("role") #XXX This is *this nodes role* ... TODO: understand terminology better.
-                self.role_json["recipes"] = [role] #the "role" maps to corresponding recipe
+                dataname = active_role + "_data"
+                role_data = datadict.pop(dataname) 
+                #add the role specific data to the role_json dict:
+                self.role_json.update(role_data) 
             except KeyError:
-                #TODO set real error here
-                print "No role found in data"
-            self.role_json.update(datadict) #add the rest of the data to the role_json dict
+                msg = "No '%s_data' found for active role '%s'" % (active_role, active_role)
+                self.log.error(msg)
+                #raise UnexpectedError(msg)
 
     def handle_roles(self):
         # XXX is this function really more approp called "handle_required_roles"?
@@ -1551,8 +1578,9 @@ class ChefConsumeRetrieveResult(DefaultConsumeRetrieveResult):
 
     def handle_thishost(self, finalize=False):
         if finalize:
-            fh = open("/opt/chef/role.json", "w")
-            fh.write(str(self.role_json))
+            fh = open(self.chef_role, "w")
+            datastr = str(self.role_json).replace("'", "\"")
+            fh.write(datastr)
             fh.close()
             (exit, stdout, stderr) = runexe(self.chef_cmd, killtime=0)
             result = "'%s': exit=%d, stdout='%s'," % (self.chef_cmd, exit, stdout)
