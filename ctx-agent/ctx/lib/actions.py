@@ -1571,10 +1571,10 @@ class ChefConsumeRetrieveResult(DefaultConsumeRetrieveResult):
                 #raise UnexpectedError(msg)
 
     def handle_roles(self):
-        # XXX is this function really more approp called "handle_required_roles"?
+        #TODO: standardize and document the below:
         for (i, role) in enumerate(self.retrresult.roles):
-            rolename = role.name+str(i)
-            self.role_json[rolename] = role.ip 
+            required_role_ip_key = role.name+"_ip"+str(i)
+            self.role_json[required_role_ip_key] = role.ip 
 
     def handle_thishost(self, finalize=False):
         if finalize:
