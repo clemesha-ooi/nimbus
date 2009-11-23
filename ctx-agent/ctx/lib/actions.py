@@ -1545,7 +1545,7 @@ class ChefConsumeRetrieveResult(DefaultConsumeRetrieveResult):
         self.chef_role = "/opt/chef/role.json"
         self.chef_cookbooks = "/opt/chef/cookbooks.tar.gz"
         self.chef_cmd_args = (self.chef_log_level, self.chef_conf, self.chef_role, self.chef_cookbooks)
-        self.chef_cmd = "chef-solo -l %s -c %s -j %s -r %s" % self.chef_cmd_args
+        self.chef_cmd = "/usr/local/bin/chef-solo -l %s -c %s -j %s -r %s" % self.chef_cmd_args
         self.role_json = {} # *This Nodes* role specific data, to be used to create the "role.json" file for Chef
  
     def handle_opaquedata(self):
