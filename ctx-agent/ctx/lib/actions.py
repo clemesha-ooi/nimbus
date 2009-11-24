@@ -1572,9 +1572,14 @@ class ChefConsumeRetrieveResult(DefaultConsumeRetrieveResult):
 
     def handle_roles(self):
         #TODO: standardize and document the below:
-        for (i, role) in enumerate(self.retrresult.roles):
-            required_role_ip_key = role.name+"_ip"+str(i)
-            self.role_json[required_role_ip_key] = role.ip 
+        for role in self.retrresult.roles:
+            key = role.name + "_ips"
+            if key in self.role_json:
+                vals = self.role_json.pop(name)
+                vals.append(role.ip)
+                self.role_json[name] = vals
+            else:
+                self.role_json[name] = [role.ip]
 
     def handle_thishost(self, finalize=False):
         if finalize:
