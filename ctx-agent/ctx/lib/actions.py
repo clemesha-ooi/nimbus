@@ -1575,11 +1575,11 @@ class ChefConsumeRetrieveResult(DefaultConsumeRetrieveResult):
         for role in self.retrresult.roles:
             key = role.name + "_ips"
             if key in self.role_json:
-                vals = self.role_json.pop(name)
+                vals = self.role_json.pop(key)
                 vals.append(role.ip)
-                self.role_json[name] = vals
+                self.role_json[key] = vals
             else:
-                self.role_json[name] = [role.ip]
+                self.role_json[key] = [role.ip]
 
     def handle_thishost(self, finalize=False):
         if finalize:
