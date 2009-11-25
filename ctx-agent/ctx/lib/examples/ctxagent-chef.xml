@@ -8,29 +8,29 @@
    <ctx>
      <provides>
        <identity/>
-       <role>master</role>
+       <role>loadbalancer</role>
      </provides>
      <requires>
        <identity/>
-       <role name="slave" hostname="true" pubkey="true" />
-       <data name="data"><![CDATA[{'role':'master', 'master_data':{'a':1,'b':2}, 'slave_data':{'y':8, 'z':9}}]]></data>
+       <role name="webapp" hostname="true" pubkey="true" />
+       <data name="data"><![CDATA[{'webapp_data':{'serve_path':'/tmp'}, 'loadbalancer_data':{'webapp_port': '80'}}]]></data>
      </requires>
    </ctx>
  </workspace>
- 
+
  <workspace>
    <name>web-application-slave</name>
    <image>ami-b48765dd</image>
-   <quantity>1</quantity>
+   <quantity>2</quantity>
    <nic wantlogin="true">public</nic>
    <ctx>
      <provides>
        <identity/>
-       <role>slave</role>
+       <role>webapp</role>
      </provides>
      <requires>
        <identity/>
-       <data name="data"><![CDATA[{'role':'slave', 'master_data':{'a':1,'b':2}, 'slave_data':{'y':8, 'z':9}}]]></data>
+       <data name="data"><![CDATA[{'webapp_data':{'serve_path':'/tmp'}, 'loadbalancer_data':{'webapp_port': '80'}}]]></data>
      </requires>
    </ctx>
  </workspace>
